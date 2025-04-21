@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K-PLAY</title>
+  <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #212121;
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+    }
+
+    .logo {
+      height: 50px;
+      margin-right: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    select {
+      padding: 5px;
+      font-size: 16px;
+    }
+
+    #keyboard {
+      display: flex;
+      position: relative;
+      height: 200px;
+      user-select: none;
+    }
+
+    .white-key {
+      width: 40px;
+      height: 200px;
+      background: white;
+      border: 1px solid black;
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      line-height: 180px;
+      color: black;
+      cursor: pointer;
+    }
+
+    .black-key {
+      width: 30px;
+      height: 120px;
+      background: black;
+      position: absolute;
+      z-index: 2;
+      margin-left: -15px;
+      color: white;
+      text-align: center;
+      line-height: 100px;
+      cursor: pointer;
+    }
+
+    .key-label {
+      position: absolute;
+      bottom: 5px;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://bastardadoll.github.io/kplay.jpeg" alt="K-Play Logo" class="logo">
+    <h1>K-PLAY</h1>
+  </header>
+  <main>
+    <div class="controls">
+      <label for="scale-select">Selecione a escala:</label>
+      <select id="scale-select">
+        <option value="C">C (Dó Maior)</option>
+        <option value="G">G (Sol Maior)</option>
+        <option value="F">F (Fá Maior)</option>
+      </select>
+    </div>
+    <div id="keyboard"></div>
+  </main>
+  <script>
+    // Definição das escalas
+    const scales = {
+      'C': ['C', 'D', 'E', 'F', 'G', 'A', 'B'],
+      'G': ['G', 'A', 'B', 'C', 'D', 'E', 'F#'],
+      'F': ['F', 'G', 'A', 'Bb', 'C', 'D', 'E']
+    };
+
+    // Mapeamento das notas para teclas brancas e pretas
+    const whiteNotesOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    const blackNotesMap = {
+      'C': 'C#',
+      'D': 'D#',
+      'F': 'F#',
+      'G': 'G#',
+      'A': 'A#'
+    };
+
+    const keyboard = document.getElementById('keyboard');
+    const scaleSelect = document.getElementById('scale-select');
+
+    // Inicialização do sampler com samples de piano
+    const sampler = new Tone.Sampler({
+      urls: {
+        "C3": "C3.mp3",
+        "D#3": "Ds3.mp3",
+        "F#3": "Fs3.mp3",
+        "A3": "A3.mp3",
+        "C4": "C4.mp3",
+        "D#4": "Ds4.mp3",
+        "F#4": "Fs4.mp3",
+        "A4": "A4.mp3",
+        "C5": "C5.mp3",
+        "D#5": "Ds5.mp3",
+        "F#5": "Fs5.mp3",
+        "A5": "A5.mp3"
+      },
+      release: 1,
+      baseUrl: "https://tonejs.github.io/audio/salamander/"
+    }).toDestination();
+
+    // Função para criar o teclado
+    function createKeyboard(scale) {
+      keyboard.innerHTML = '';
+      const notes = scales[scale];
+      const octaves = [3, 4, 5];
+      let keyIndex = 0;
+
+      octaves.forEach(octave => {
+        notes.forEach(note => {
+          const noteName = note + octave;
+          const whiteKey = document.createElement('div');
+          whiteKey.classList.add('white-key');
+          whiteKey.dataset.note = noteName;
+          whiteKey.innerHTML = `<div class="key-label">${noteName}</div>`;
+          whiteKey.style.left = `${keyIndex * 40}px`;
+          keyboard.appendChild(whiteKey);
+
+          // Adiciona tecla preta se aplicável
+          const sharpNote = blackNotesMap[note];
+          if (sharpNote && notes.includes(sharpNote.replace('#', ''))) {
+            const blackKey = document.createElement('div');
+            blackKey.classList.add('black-key');
+            blackKey.dataset.note = sharpNote + octave;
+            blackKey.innerHTML = `<div class="key-label">${sharpNote + octave}</div>`;
+            blackKey.style.left = `${keyIndex * 40 + 30}px`;
+            keyboard.appendChild(blackKey);
+          }
+
+          keyIndex++;
+        });
+      });
+
+      // Adiciona eventos de clique às teclas
+      document.querySelectorAll('.white-key, .black-key').forEach(key => {
+        key.addEventListener('click', () => {
+          const note = key.dataset.note;
+          sampler.triggerAttackRelease(note, '8n');
+        });
+      });
+    }
+
+    // Inicializa o teclado com a escala padrão
+    createKeyboard(scaleSelect.value);
+
+    // Atualiza o teclado quando a escala é alterada
+    scaleSelect.addEventListener('change', () => {
+      createKeyboard(scaleSelect.value);
+    });
+  </script>
+</body>
+</html>
